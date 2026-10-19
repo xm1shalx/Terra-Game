@@ -1,0 +1,183 @@
+HTML
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Canopy Catch - Terra Hack Club</title>
+    <style>
+        body {
+            background-color: #1a2f1a;
+            color: white;
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+        h1 {
+            margin-bottom: 5px;
+            color: #81c784;
+        }
+        #gameCanvas {
+            background-color: #87ceeb;
+            border: 4px solid #2e7d32;
+            border-radius: 8px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.4);
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Canopy Catch 🌿</h1>
+    <p>Catch green seeds, dodge red trash! Use Left/Right arrows or A/D.</p>
+    
+    <canvas id="gameCanvas" width="400" height="500"></canvas>
+
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+
+        let score = 0;
+        let lives = 3;
+        let timeLeft = 30;
+        let timerCounter = 0;
+        let gameOver = false;
+
+        const player = {
+            x: canvas.width / 2 - 35,
+            y: canvas.height - 30,
+            width: 70,
+            height: 20,
+            speed: 7,
+            dx: 0
+        };
+
+        const items = [];
+        let spawnTimer = 0;
+
+        function spawnItem() {
+            const isGood = Math.random() > 0.35;
+            items.push({
+                x: Math.random() * (canvas.width - 20),
+                y: -20,
+                width: 20,
+                height: 20,
+                speed: 2 + Math.random() * 2.5,
+                type: isGood ? 'seed' : 'trash'
+            });
+        }
+
+        window.addEventListener("keydown", (e) => {
+            if (e.key === "ArrowLeft" || e.key === "a" || e.key === "A") {
+                player.dx = -player.speed;
+            } else if (e.key === "ArrowRight" || e.key === "d" || e.key === "D") {
+                player.dx = player.speed;
+            } else if (e.key === " " && gameOver) {
+                resetGame();
+            }
+        });
+
+        window.addEventListener("keyup", (e) => {
+            if (["ArrowLeft", "a", "A", "ArrowRight", "d", "D"].includes(e.key)) {
+                player.dx = 0;
+            }
+        });
+
+        function resetGame() {
+            score = 0;
+            lives = 3;
+            timeLeft = 30;
+            items.length = 0;
+            gameOver = false;
+            gameLoop();
+        }
+
+        function gameLoop() {
+            if (gameOver) return;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            player.x += player.dx;
+            if (player.x < 0) player.x = 0;
+            if (player.x + player.width > canvas.width) player.x = canvas.width - player.width;
+
+            ctx.fillStyle = "#2e7d32";
+            ctx.fillRect(player.x, player.y, player.width, player.height);
+
+            spawnTimer++;
+            if (spawnTimer > 35) {
+                spawnItem();
+                spawnTimer = 0;
+            }
+
+            timerCounter++;
+            if (timerCounter >= 60) {
+                timeLeft--;
+                timerCounter = 0;
+                if (timeLeft <= 0) gameOver = true;
+            }
+
+            for (let i = 0; i < items.length; i++) {
+                let item = items[i];
+                item.y += item.speed;
+
+                ctx.fillStyle = item.type === 'seed' ? '#4caf50' : '#e53935';
+                ctx.beginPath();
+                ctx.arc(item.x + 10, item.y + 10, 10, 0, Math.PI * 2);
+                ctx.fill();
+
+                if (
+                    item.y + item.height >= player.y &&
+                    item.x + item.width >= player.x &&
+                    item.x <= player.x + player.width
+                ) {
+                    if (item.type === 'seed') {
+                        score += 10;
+                    } else {
+                        lives--;
+                        if (lives <= 0) gameOver = true;
+                    }
+                    items.splice(i, 1);
+                    i--;
+                    continue;
+                }
+
+                if (item.y > canvas.height) {
+                    items.splice(i, 1);
+                    i--;
+                }
+            }
+
+            ctx.fillStyle = "#1b5e20";
+            ctx.font = "bold 15px Arial";
+            ctx.fillText("Score: " + score, 15, 25);
+            ctx.fillText("Time: " + timeLeft + "s", canvas.width / 2 - 25, 25);
+            ctx.fillText("Lives: " + "❤️".repeat(lives), canvas.width - 100, 25);
+
+            if (gameOver) {
+               
+            ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = "#ffffff";
+            ctx.font = "bold 30px Arial";
+            ctx.textAlign = "center";
+            ctx.fillText("Time's Up!", canvas.width /2, canvas.height / 2 - 20);
+            ctx.font = "18px Arial";
+            ctx.fillText("Final Score:" + score, canvas.width / 2, canvas.height / 2 + 15);
+              ctx.fillText("Press Space to Play Again", canvas.width / 2, canvas.height / 2 + 45 );
+              return;
+            }
+
+        requestAnimationFrame(gameLoop);
+
+        }
+
+        gameLoop();
+            </script>
+        </body>
+        </html>
+
+        
